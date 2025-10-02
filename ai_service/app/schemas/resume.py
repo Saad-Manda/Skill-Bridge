@@ -1,5 +1,5 @@
 from pydantic import BaseModel
-from typing import List
+from typing import List, Optional
 
 class Experience(BaseModel):
     title: str
@@ -7,9 +7,12 @@ class Experience(BaseModel):
     years: float
 
 class Education(BaseModel):
-    degree: str
-    field: str
-    institution: str
+    degree: Optional[str]
+    field: Optional[str]
+    institution: Optional[str]
+    start_year: Optional[int]
+    end_year: Optional[int]
+    grade: Optional[str]
 
 class Resume(BaseModel):
     name: str
