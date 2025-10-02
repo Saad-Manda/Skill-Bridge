@@ -12,6 +12,8 @@ class Education(BaseModel):
     institution: str
 
 class Resume(BaseModel):
+    name: str
+    raw_text: str
     skills: List[str]
     experience: List[Experience]
     education: List[Education]
