@@ -9,7 +9,7 @@ from alembic import context
 from sqlalchemy import engine_from_config
 from app.models.base import Base
 import app.models.job
-
+import app.models.candidate
 
 
 
