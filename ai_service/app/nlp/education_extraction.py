@@ -84,15 +84,24 @@ def parse_education_line(line: str) -> Education:
 
 
 def extract_education(text: str) -> List[Education]:
-    """
-    Extract structured education entries from resume text.
-    """
     section = extract_education_section(text)
     results = []
 
     for line in section:
         entry = parse_education_line(line)
-        if entry.degree or entry.institution:  # keep only real hits
+        if entry.degree or entry.institution:  
             results.append(entry)
 
     return results
+
+if __name__ == "__main__":
+    sample_text = """
+    EDUCATION
+    Bachelor of Technology in Computer Science, ABC University, GPA 8.5/10, 2016 - 2020
+    Master of Science, Data Science, XYZ Institute, 2021
+    High School, DEF Senior Secondary School, 85%, 2014
+    """
+
+    edu = extract_education(sample_text)
+    for e in edu:
+        print(e.json())

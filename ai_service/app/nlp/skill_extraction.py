@@ -1,6 +1,6 @@
 import spacy
 import re
-from typing import List, Dict
+from typing import List
 
 nlp = spacy.load("en_core_web_sm")
 
@@ -22,9 +22,3 @@ def extract_education(text: str) -> List[str]:
     edu = []
     for p in patterns:
         edu.extend(re.findall(p, text, re.IGNORECASE))
-    return edu
-
-def extract_experience(text: str) -> List[Dict]:
-    pattern = r"(\d+)\s+(?:years|yrs)\s+(?:of)?\s+experience\s+(?:at|with)?\s+([A-Za-z &]+)"
-    matches = re.findall(pattern, text, re.IGNORECASE)
-    return [{"years": int(m[0]), "company": m[1]} for m in matches]

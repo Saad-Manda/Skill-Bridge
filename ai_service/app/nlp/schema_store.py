@@ -1,8 +1,8 @@
-from app.schemas.resume import ResumeSchema
+from app.schemas.resume import Resume
 import json
 
 def create_resume_schema(name: str, text: str, skills, education, experience):
-    return ResumeSchema(
+    return Resume(
         name=name,
         raw_text=text,
         skills=skills,
