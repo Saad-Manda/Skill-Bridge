@@ -1,0 +1,9 @@
+re
+datetime
+typing
+spacy
+pdfminer.six
+docx2txt
+json
+pathlib
+pydantic
