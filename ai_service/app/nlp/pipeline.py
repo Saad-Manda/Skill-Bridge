@@ -6,10 +6,11 @@ from app.nlp.skill_extraction import extract_skills
 from app.nlp.education_extraction import extract_education
 from app.nlp.experience_extraction import extract_experience
 from app.nlp.schema_store import create_resume_schema
+from app.schemas.resume import Resume
 
 
-def parse_dir(dir):
-    all_resumes = []
+def parse_dir(dir: Path) -> list[Resume]:
+    all_resumes: list[Resume] = []
     for file in dir.glob("*.*"):
         raw_text = clean_text(parse_file(str(file)))
         skills = extract_skills(raw_text)
