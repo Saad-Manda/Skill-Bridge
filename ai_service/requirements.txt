@@ -7,3 +7,5 @@ docx2txt
 json
 pathlib
 pydantic
+scikit-learn
+sentence-transformers
