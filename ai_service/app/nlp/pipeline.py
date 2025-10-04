@@ -9,7 +9,7 @@ from app.nlp.schema_store import create_resume_schema
 from app.schemas.resume import Resume
 
 
-def parse_dir(dir: Path) -> list[Resume]:
+def parse_resume(dir: Path) -> list[Resume]:
     all_resumes: list[Resume] = []
     for file in dir.glob("*.*"):
         raw_text = clean_text(parse_file(str(file)))
