@@ -2,9 +2,9 @@ from pydantic import BaseModel
 from typing import List, Optional
 
 class Experience(BaseModel):
-    title: str
-    company: str
-    duration_months: float
+    title: Optional[str] = None
+    company: Optional[str] = None
+    duration_months: Optional[float] = None
 
 class Education(BaseModel):
     degree: Optional[str]

@@ -14,6 +14,10 @@ class Candidate(Base):
     name = Column(String, nullable=True)
     email = Column(String, nullable=True, index=True)
     phone = Column(String, nullable=True)
-    education = Column(String, nullable=True)
     experience_years = Column(Integer, nullable=True)
     skills = Column(JSON, default=list)
+    
+    # Extras for AI Client
+    education_details = Column(JSON, nullable=True)  
+    experiences = Column(JSON, nullable=True)  
+    raw_text = Column(Text, nullable=True)

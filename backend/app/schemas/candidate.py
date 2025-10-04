@@ -17,10 +17,10 @@ class CandidateRead(CandidateBase):
     education: Optional[str] = None
     experience_years: Optional[int] = None
     skills: List[str] = []
+    raw_text: Optional[str] = None
+    experiences: List[dict] = []
+    education_details: List[dict] = []
 
     class Config:
         orm_mode = True
 
-
-
-    
