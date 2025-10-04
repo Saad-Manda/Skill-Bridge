@@ -2,8 +2,6 @@
 
 ## Scoring Resume
 
----
-
 ## **Skill Score System – Full Design**
 
 ### **1. Inputs**
