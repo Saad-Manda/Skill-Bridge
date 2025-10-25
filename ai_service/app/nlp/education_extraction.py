@@ -4,20 +4,61 @@ from typing import List
 from spacy.matcher import Matcher
 from app.schemas.resume import Education
 
-nlp = spacy.load("en_core_web_sm")
-matcher = Matcher(nlp.vocab)
 
-degree_patterns = [
-    [{"LOWER": {"IN": ["bachelor", "master", "phd", "mba", "associate", "doctorate"]}}],
-    [{"TEXT": {"REGEX": r"(B\.Sc|M\.Sc|B\.Tech|M\.Tech|B\.Eng|LLB|LLM|MD|DO|DDS)"}}],
-]
+# lazy-load spaCy model and matcher to avoid import-time failure when model is missing
+_nlp = None
+_matcher = None
 
-for pattern in degree_patterns:
-    matcher.add("DEGREE", [pattern])
 
-gpa_pattern = re.compile(r"(GPA|CGPA)\s*[:\-]?\s*([\d\.]+)\s*\/?\s*([\d\.]+)?", re.IGNORECASE)
+def get_nlp():
+    global _nlp
+    if _nlp is None:
+        _nlp = spacy.load("en_core_web_sm")
+    return _nlp
+
+
+def get_matcher():
+    global _matcher
+    if _matcher is None:
+        nlp = get_nlp()
+        _matcher = Matcher(nlp.vocab)
+        degree_patterns = [
+            [
+                {
+                    "LOWER": {
+                        "IN": [
+                            "bachelor",
+                            "master",
+                            "phd",
+                            "mba",
+                            "associate",
+                            "doctorate",
+                        ]
+                    }
+                }
+            ],
+            [
+                {
+                    "TEXT": {
+                        "REGEX": r"(B\.Sc|M\.Sc|B\.Tech|M\.Tech|B\.Eng|LLB|LLM|MD|DO|DDS)"
+                    }
+                }
+            ],
+        ]
+        for pattern in degree_patterns:
+            _matcher.add("DEGREE", [pattern])
+    return _matcher
+
+
+gpa_pattern = re.compile(
+    r"(GPA|CGPA)\s*[:\-]?\s*([\d\.]+)\s*\/?\s*([\d\.]+)?", re.IGNORECASE
+)
 perc_pattern = re.compile(r"(\d{2,3}\.?\d?)\s?%", re.IGNORECASE)
-year_pattern = re.compile(r"(19|20)\d{2}")
+year_pattern = re.compile(r"(?:19|20)\d{2}")
+date_range_re = re.compile(
+    r"(?P<start>(?:[A-Za-z]{3,9}\s+)?(?:19|20)\d{2})\s*(?:\u2013|\u2014|-|to)\s*(?P<end>(?:[A-Za-z]{3,9}\s+)?(?:19|20)\d{2}|present)",
+    re.IGNORECASE,
+)
 
 
 def extract_education_section(text: str, window: int = 8) -> List[str]:
@@ -30,13 +71,13 @@ def extract_education_section(text: str, window: int = 8) -> List[str]:
     edu_lines = []
     for i, line in enumerate(lines):
         if any(k in line.lower() for k in edu_keywords):
-            edu_lines.extend(lines[i:i+window])
+            edu_lines.extend(lines[i : i + window])
     return edu_lines if edu_lines else lines  # fallback = whole resume
 
 
 def parse_education_line(line: str) -> Education:
-    doc = nlp(line)
-    matches = matcher(doc)
+    doc = get_nlp()(line)
+    matches = get_matcher()(doc)
 
     degree, field, institution, grade = None, None, None, None
     years = []
@@ -50,7 +91,7 @@ def parse_education_line(line: str) -> Education:
     if degree:
         degree_end = line.lower().find(degree.lower()) + len(degree)
         remainder = line[degree_end:].strip()
-        tokens = nlp(remainder)
+        tokens = get_nlp()(remainder)
         nouns = [t.text for t in tokens if t.pos_ in ["NOUN", "PROPN"]]
         if nouns:
             field = " ".join(nouns[:3])  # crude heuristic
@@ -60,26 +101,42 @@ def parse_education_line(line: str) -> Education:
         if ent.label_ in ["ORG", "GPE"]:
             institution = ent.text
 
-    # GRADE
-    gpa_match = gpa_pattern.search(line)
-    if gpa_match:
-        grade = gpa_match.group(0)
-    else:
-        perc_match = perc_pattern.search(line)
-        if perc_match:
-            grade = perc_match.group(0)
+    # YEARS / ranges
+    start_year = None
+    end_year = None
 
-    # YEARS
-    years = year_pattern.findall(line)
-    years = [int("".join(y)) for y in years] if years else []
+    # Prefer explicit date ranges like '2016 - 2020' or 'Jan 2017 – Present'
+    dr = date_range_re.search(line)
+    if dr:
+
+        def _strip_year(s: str):
+            m = year_pattern.search(s)
+            return int(m.group(0)) if m else None
+
+        start_year = _strip_year(dr.group("start"))
+        end_raw = dr.group("end")
+        if end_raw and end_raw.strip().lower() == "present":
+            end_year = None
+        else:
+            end_year = _strip_year(end_raw)
+    else:
+        found = year_pattern.findall(line)
+        years = [int(y) for y in found] if found else []
+        if len(years) >= 2:
+            start_year, end_year = min(years), max(years)
+        elif len(years) == 1:
+            # single year -> treat as completion/end year
+            start_year, end_year = None, years[0]
+        else:
+            start_year, end_year = None, None
 
     return Education(
         degree=degree,
         field=field,
         institution=institution,
-        start_year=min(years) if years else None,
-        end_year=max(years) if years else None,
-        grade=grade
+        start_year=start_year,
+        end_year=end_year,
+        grade=grade,
     )
 
 
@@ -89,10 +146,11 @@ def extract_education(text: str) -> List[Education]:
 
     for line in section:
         entry = parse_education_line(line)
-        if entry.degree or entry.institution:  
+        if entry.degree or entry.institution:
             results.append(entry)
 
     return results
+
 
 if __name__ == "__main__":
     sample_text = """
