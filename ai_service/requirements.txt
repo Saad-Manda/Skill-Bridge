@@ -7,6 +7,8 @@ httpx
 spacy
 pdfminer.six
 docx2txt
+sentence_transformers
+scikit-learn
 
 # config & models
 pydantic

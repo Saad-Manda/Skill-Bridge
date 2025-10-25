@@ -141,6 +141,7 @@ celerybeat.pid
 env/
 venv/
 ENV/
+SkillBridge/
 env.bak/
 venv.bak/
 
