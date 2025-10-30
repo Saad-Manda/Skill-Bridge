@@ -7,7 +7,7 @@ class Candidate(Base):
     __tablename__ = "candidates"
 
     id = Column(Integer, primary_key=True, index=True)
-    resume_file_url = Column(String, nullable=False)
+    resume_file_path = Column(String, nullable=True)
     parsed = Column(Boolean, default=False)
 
     # After Parsing
@@ -18,6 +18,6 @@ class Candidate(Base):
     skills = Column(JSON, default=list)
     
     # Extras for AI Client
-    education_details = Column(JSON, nullable=True)  
-    experiences = Column(JSON, nullable=True)  
+    education_details = Column(JSON, default=list, nullable=True)  
+    experiences = Column(JSON, default=list, nullable=True)  
     raw_text = Column(Text, nullable=True)

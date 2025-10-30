@@ -1,9 +1,9 @@
 from pydantic import BaseModel, EmailStr
 from typing import Optional, List
-from datetime import datetime
+
 
 class CandidateBase(BaseModel):
-    resume_file_url: str
+    pass
 
 class CandidateCreate(CandidateBase):
     pass

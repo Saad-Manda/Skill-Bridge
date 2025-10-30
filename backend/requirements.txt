@@ -5,3 +5,5 @@ asyncpg
 pydantic
 python-dotenv
 alembic
+pydantic-settings
+python-multipart

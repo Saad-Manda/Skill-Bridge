@@ -1,4 +1,5 @@
 from httpx import AsyncClient
+from typing import Dict, Any
 from app.config import settings
 
 class AIServiceClient:
