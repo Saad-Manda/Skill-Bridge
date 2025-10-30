@@ -24,6 +24,6 @@ def parse_resume(resume_path: str) -> dict:
 
 
 if __name__ == "__main__":
-    test_resume = "resume.pdf"
+    test_resume = "MdMinhajUddinResume.pdf"
     result = parse_resume(test_resume)
     print(json.dumps(result, indent=4))
