@@ -9,6 +9,9 @@ pdfminer.six
 docx2txt
 sentence_transformers
 scikit-learn
+pandas
+python-dateutil
+nltk
 
 # config & models
 pydantic
