@@ -1,5 +1,6 @@
-from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker, AsyncSession
+from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
 from sqlalchemy import text
+from sqlalchemy.orm import sessionmaker
 from typing import AsyncGenerator
 
 
@@ -14,7 +15,7 @@ engine = create_async_engine(
     pool_pre_ping=True,
 )
 
-async_session = async_sessionmaker(
+async_session_maker = sessionmaker(
     engine,
     expire_on_commit=False,
     class_=AsyncSession,
@@ -26,7 +27,7 @@ async def get_db() -> AsyncGenerator[AsyncSession, None]:
     FastAPI dependency that yields an AsyncSession.
     Usage: db: AsyncSession = Depends(get_db)
     """
-    async with async_session() as session:
+    async with async_session_maker() as session:
         yield session
 
 

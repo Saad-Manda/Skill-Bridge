@@ -9,42 +9,33 @@ app = FastAPI(title="AI Service")
 
 
 
-@app.post("/parse_resume")
-async def get_parsed_resume(resume: UploadFile = File(...)):
-    contents = await resume.read()
+@app.post("/parse-resume")
+async def get_parsed_resume(file: UploadFile = File(...)):
     
-    if not contents:
-        raise HTTPException(status_code=400, detail="Empty file")
-    
-
-    suffix = os.path.splitext(resume.filename)[1] or ".pdf"
-    tmp = tempfile.NamedTemporaryFile(delete=False, suffix=suffix)
-    tmp_path = tmp.name
-    
-    try :
+    with tempfile.NamedTemporaryFile(delete=False, suffix=os.path.splitext(file.filename)[1]) as tmp:
+        contents = await file.read()
         tmp.write(contents)
-        tmp.flush()
-        tmp.close()
-        
+        tmp_path = tmp.name
+
+    try :
         parsed = parse_resume(tmp_path)
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        return {
+        "name": parsed.get("name"),
+        "email": parsed.get("email"),
+        "phone": parsed.get("mobile_number"),
+        "skills": parsed.get("skills", []),
+        "experiences": parsed.get("experience", []),
+        "education": parsed.get("education", []),
+        "raw_text": parsed.get("raw_text", "")
+        }
+        
     finally:
-        try:
-            os.unlink(tmp_path)
-        except Exception:
-            pass
+        if os.path.exists(tmp_path):
+            os.remove(tmp_path)
 
 
-    return {
-    "name": parsed.get("name"),
-    "email": parsed.get("email"),
-    "phone": parsed.get("mobile_number"),
-    "skills": parsed.get("skills", []),
-    "experiences": parsed.get("experience", []),
-    "education": parsed.get("education", []),
-    "raw_text": parsed.get("raw_text", "")
-}
+
+
 
 
 @app.get("/health")

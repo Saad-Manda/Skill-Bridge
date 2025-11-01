@@ -11,6 +11,9 @@ class Settings(BaseSettings):
     DEBUG: bool = False
     DATABASE_URL: str
     AI_SERVICE_URL: str
+    UPLOAD_BATCH_DIR: str
+    REDIS_HOST: str
+    REDIS_PORT: int
     model_config = SettingsConfigDict(env_file=".env")
 
 
