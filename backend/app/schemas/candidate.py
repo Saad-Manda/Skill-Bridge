@@ -24,3 +24,10 @@ class CandidateRead(CandidateBase):
     class Config:
         orm_mode = True
 
+
+class BatchUploadResponse(BaseModel):
+    total_files: int
+    processed: int
+    failed: List[str]
+    message: str
+    batch_id: str
