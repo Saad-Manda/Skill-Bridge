@@ -1,11 +1,18 @@
-re
-datetime
-typing
+# server
+fastapi
+uvicorn[standard]
+httpx
+
+# NLP / parsing
 spacy
 pdfminer.six
 docx2txt
-json
-pathlib
-pydantic
+sentence_transformers
 scikit-learn
-sentence-transformers
+pandas
+python-dateutil
+nltk
+
+# config & models
+pydantic
+python-dotenv

@@ -55,3 +55,14 @@ def extract_skills(text: str) -> List[str]:
         if re.search(rf"\b{kw}\b", text, re.IGNORECASE):
             skills.add(kw)
     return list(skills)
+
+
+def extract_education(text: str) -> List[str]:
+    patterns = [
+        r"(Bachelor|Master|B\.Sc|M\.Sc|Ph\.D|MBA|B\.A|M\.A)\s?in\s?\w+",
+        r"(High School|Secondary School)",
+    ]
+    edu = []
+    for p in patterns:
+        edu.extend(re.findall(p, text, re.IGNORECASE))
+    return edu
