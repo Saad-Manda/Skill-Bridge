@@ -226,3 +226,157 @@ This example clearly shows how:
 4. Final score is a weighted combination — not a simple average.  
 
 ---
+
+
+# Skill Scoring Algorithm
+
+1. **Undirected Edges are Insufficient:** You cannot rely on undirected co-occurrence. "PyTorch" implies "Python", but "Python" does not imply "PyTorch". If a JD asks for Python and I have PyTorch, I should match. If a JD asks for PyTorch and I only have Python, I should fail. Your current graph treats them as equals.
+2. **The "Capability Layer" is Operational Debt:** Manually maintaining "capability tags" (analytics, infra, etc.) for 10,000+ rapidly changing skills is impossible. You will drown in maintenance. The graph structure itself must solve this.
+3. **Ambiguous Scoring:** "Penalize" and "Reward" are too vague. You need a normalized mathematical framework, otherwise, your scores will drift (e.g., a candidate with 100 irrelevant skills might outscore a focused candidate simply by accumulating tiny "Category C" bonuses).
+
+---
+
+# Directed Skill Implication Graph (DSIG)
+
+### Core Philosophy Shift
+
+We are moving from a **Co-occurrence Graph** (undirected, "A is related to B") to an **Implication Graph** (directed, "B implies proficiency in A").
+
+## 1. The Data Structure (What We Store)
+
+We do not store a monolithic adjacency matrix. We store a **Knowledge Graph** with two specific node types and embedding support.
+
+### 1.1 Node Schema
+
+Each node represents a Skill.
+
+```json
+{
+  "id": "skill_123",
+  "canonical_name": "PostgreSQL",
+  "type": "SKILL",
+  "cluster_id": 12,  // From offline community detection (e.g., "Relational DBs")
+  "popularity_score": 0.85, // 0 to 1 (Global frequency)
+  "embedding": [0.12, -0.45, ...] // S-BERT vector of the skill description/context
+}
+
+```
+
+### 1.2 Edge Schema
+
+We store two types of edges. This is critical for the "Directionality" problem.
+
+| Edge Type | Direction | Meaning | Weight |
+| --- | --- | --- | --- |
+| **CO_OCCUR** | Undirected | "People often have both" |  |
+| **IMPLIES** | Directed () | "Knowing A strongly implies knowing B" | $P(B |
+
+*Example:*
+
+* `PyTorch` -> **IMPLIES** (0.95) -> `Python`
+* `Python` -> **IMPLIES** (0.05) -> `PyTorch` (Weak edge, pruned)
+* `React` <-> **CO_OCCUR** <-> `Node.js` (Strong ecosystem overlap, but one doesn't strictly imply the other)
+
+---
+
+## 2. Offline Phase: Graph Construction
+
+We automate the "Capability" check using vectors and conditional probability, removing the manual tagging need.
+
+**Step 1: Metric Calculation**
+For every pair  in the resume corpus:
+
+1. **Co-occurrence:** Jaccard Index.
+2. **Implication:** Calculate Conditional Probability .
+* *If  is high (> 0.7) and  is low*, create a directed **IMPLIES** edge from A to B.
+* *If both are roughly equal and high*, create a **CO_OCCUR** edge.
+
+
+
+**Step 2: Semantic Guardrails (The "Anti-Redis-Analytics" Check)**
+Before saving an edge, compute the **Cosine Similarity** between the embeddings of Skill A and Skill B.
+
+* If `EdgeWeight` is high but `VectorSimilarity` is low (e.g., "Java" and "Recruiting" often appear together in HR tech resumes), **PRUNE THE EDGE**. This automatically filters buzzword noise without manual tags.
+
+**Step 3: Community Detection**
+Run Louvain/Leiden on the graph. Store the `ClusterID` on every node. This replaces your "Capability Layer." If Node A and Node B are in different clusters, they are functionally distinct.
+
+---
+
+## 3. Runtime Phase: The Matching Algorithm
+
+This is the exact logical flow to code.
+
+### Inputs
+
+* ****: Set of Skills in Job Description (weighted by explicit "Required" vs "Nice to have").
+* ****: Set of Skills in Resume.
+
+### Step 3.1: Expand the JD (The "Query Subgraph")
+
+We don't just look for the JD skills. We look for what they *imply* and what they are *part of*.
+
+For each skill :
+
+1. Fetch  from the graph.
+2. **Expansion A (Alternatives):** Fetch neighbors connected via strong **CO_OCCUR** edges (e.g., JD asks for "AWS", graph suggests "Azure" is a valid alternative/context).
+3. **Expansion B (Children):** Fetch nodes that **IMPLY**  (e.g., JD asks for "Python"; graph knows "Django" implies "Python").
+
+This creates a localized subgraph .
+
+### Step 3.2: Classify Resume Skills
+
+Iterate through every skill  and map it against :
+
+| Relationship to JD Skill () | Classification | Scoring Logic |
+| --- | --- | --- |
+|  | **Direct Match** | Max Score (1.0) |
+|  | **Deep Match** | High Score (1.0) (e.g. JD: Python, Res: PyTorch) |
+|  | **Broad Match** | Partial Score (0.5) (e.g. JD: PyTorch, Res: Python) |
+|  | **Adjacent** | Low Score (0.2 - 0.4) based on weight |
+| Same Cluster, No Edge | **Thematic** | Tiny Bonus (0.05) |
+| Different Cluster | **Irrelevant** | 0.0 |
+
+---
+
+## 4. The Final Scoring Formula
+
+We need a unified score, not just buckets.
+
+Let  be the weight of a JD skill (e.g., 1.0 for required, 0.5 for optional).
+Let  be the best match score for JD skill  found in the resume.
+
+### Handling the "Categories" (A-E)
+
+**Category A (Missing Critical Skills):**
+Handled by the denominator. If you miss a high  skill, your max possible score drops significantly.
+
+* *Refinement:* Apply a **Non-Linear Penalty**. If coverage of "Required" skills < 50%, multiply final score by 0.5.
+
+**Category B (Matches):**
+Handled by "Direct Match" and "Deep Match" logic ().
+
+**Category C (Relevant Bonus):**
+Handled by "Adjacent" logic. If JD wants "Postgres" and you have "MySQL" (strong co-occur/cluster match), you get 0.3 points. This boosts you over a candidate with nothing, but keeps you below a perfect match.
+
+**Category D (Irrelevant):**
+Filtered naturally. If a skill isn't in  (the subgraph) and isn't in the same cluster, it contributes 0 to the numerator.
+
+**Category E (Many-to-One):**
+We use a `Max()` function per JD skill bucket.
+
+* If JD asks for "AWS" ().
+* Resume has "EC2", "S3", "Lambda".
+* All three imply "AWS".
+* We do not sum them (which would explode the score). We take . You can saturate the "AWS" requirement, but you cannot exceed it to compensate for missing "Python".
+
+---
+
+## 5. Summary of Improvements
+
+1. **Fixed Directionality:** "Deep Matches" (I have PyTorch, you asked for Python) are now mathematically distinct from "Broad Matches".
+2. **Removed Manual Tags:** Used **Vectors + Community Detection** to automate the "Context/Capability" layer.
+3. **Bounded Scoring:** The score is a rigorous percentage () representing "Percentage of Job Requirements Met", rather than an arbitrary integer.
+4. **Implicit vs Explicit:** We distinguish between explicitly asked skills and implicit gap filling using the **IMPLIES** edge type.
+
+This system is defensible because every match is traceable to a specific edge in the graph, and the graph is built on statistically significant real-world data, not manual rules.
