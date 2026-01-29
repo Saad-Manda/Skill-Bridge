@@ -266,10 +266,10 @@ Each node represents a Skill.
 
 We store two types of edges. This is critical for the "Directionality" problem.
 
-| Edge Type | Direction | Meaning | Weight |
-| --- | --- | --- | --- |
-| **CO_OCCUR** | Undirected | "People often have both" |  |
-| **IMPLIES** | Directed () | "Knowing A strongly implies knowing B" | $P(B |
+| Edge Type | Direction | Meaning |
+| --- | --- | --- |
+| **CO_OCCUR** | Undirected | "People often have both" |
+| **IMPLIES** | Directed () | "Knowing A strongly implies knowing B" |
 
 *Example:*
 
