@@ -7,8 +7,16 @@ python-dotenv
 alembic
 pydantic-settings
 python-multipart
-celery>=5.3.4
+arq
 redis>=5.0.1
 aioredis>=2.0.1
 aiofiles>=23.2.1
 httpx
+pydantic[email]
+greenlet
+spacy
+nltk
+pandas
+docx2txt
+pdfminer
+datasets

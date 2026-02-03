@@ -14,7 +14,6 @@ class CandidateRead(CandidateBase):
     name: Optional[str] = None
     email: Optional[EmailStr] = None
     phone: Optional[str] = None
-    education: Optional[str] = None
     experience_years: Optional[int] = None
     skills: List[str] = []
     raw_text: Optional[str] = None
@@ -30,4 +29,5 @@ class BatchUploadResponse(BaseModel):
     processed: int
     failed: List[str]
     message: str
-    batch_id: str
+    batch_id: Optional[str] = None
+    job_ids: List[str] = []
