@@ -1,6 +1,6 @@
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
 from sqlalchemy import text
-from sqlalchemy.orm import sessionmaker
+from sqlalchemy.ext.asyncio import async_sessionmaker
 from typing import AsyncGenerator
 
 
@@ -15,8 +15,8 @@ engine = create_async_engine(
     pool_pre_ping=True,
 )
 
-async_session_maker = sessionmaker(
-    engine,
+async_session_maker = async_sessionmaker(
+    bind=engine,
     expire_on_commit=False,
     class_=AsyncSession,
 )

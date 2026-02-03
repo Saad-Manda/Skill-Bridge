@@ -5,6 +5,8 @@ from .api.routes_jobs import router as job_router
 from .api.routes_candidates import router as candidate_router
 app = FastAPI(title=settings.PROJECT_NAME, debug=settings.DEBUG)
 
+
+
 # include future routers under /api or top-level as you like
 app.include_router(health_router, prefix="")
 app.include_router(job_router, prefix="")

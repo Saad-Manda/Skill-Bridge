@@ -41,7 +41,6 @@ def extract_text_from_pdf(pdf_path):
                     converter = TextConverter(
                         resource_manager,
                         fake_file_handle,
-                        codec='utf-8',
                         laparams=LAParams()
                     )
                     page_interpreter = PDFPageInterpreter(
@@ -489,6 +488,9 @@ def extract_experience(resume_text):
 
     # Search the word 'experience' in the chunk and
     # then print out the text after it
+    
+    
+    ## this is the core problem here its dumping the whole exp sxn as it is
     x = [
         x[x.lower().index('experience') + 10:]
         for i, x in enumerate(test)
